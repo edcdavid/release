@@ -123,6 +123,13 @@ oc -n openshift-ptp logs podman
 
 }
 
+# print RTC logs
+print_time() {
+  oc debug node/cnfdf30.telco5gran.eng.rdu2.redhat.com -- chroot /host date;sudo hwclock
+  oc debug node/cnfdf31.telco5gran.eng.rdu2.redhat.com -- chroot /host date;sudo hwclock
+  oc debug node/cnfdf32.telco5gran.eng.rdu2.redhat.com -- chroot /host date;sudo hwclock
+}
+
 # Define the function to retry a command with a timeout
 retry_with_timeout() {
   local timeout=$1
@@ -276,6 +283,9 @@ export PTP_TEST_MODE=dualnicbc
 export JUNIT_OUTPUT_FILE=test_results_${PTP_TEST_MODE}.xml
 make functests || temp_status_dnbc=$?
 
+# get RTC logs
+print_time
+
 # wait for old linuxptp-daemon pods to be deleted to avoid remaining ptp GM interference
 sleep 60
 
@@ -284,6 +294,9 @@ export PTP_TEST_MODE=bc
 export JUNIT_OUTPUT_FILE=test_results_${PTP_TEST_MODE}.xml
 make functests || temp_status_bc=$?
 
+# get RTC logs
+print_time
+
 # wait for old linuxptp-daemon pods to be deleted to avoid remaining ptp GM interference
 sleep 60
 
@@ -291,6 +304,9 @@ sleep 60
 export PTP_TEST_MODE=oc
 export JUNIT_OUTPUT_FILE=test_results_${PTP_TEST_MODE}.xml
 make functests || temp_status_oc=$?
+
+# get RTC logs
+print_time
 
 # saving overall status (all success=0, any failure=1)
 status=0
